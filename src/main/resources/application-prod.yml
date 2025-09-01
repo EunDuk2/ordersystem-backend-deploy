@@ -1,0 +1,63 @@
+#프로젝트 이름 설정 예시
+#spring.application.name=basic
+
+#서버 포트 기본값은 8080입니다
+#server.port=8080
+
+
+server:
+  port: 8080
+
+spring:
+  config:
+    activate:
+      on-profile: prod
+  redis:
+    host: xxxx
+    port: 6379
+  # 아래는 jdbc의 기본 db 관련 설정인데, jdbc 뿐만 아니라 mybatis / jpa 등 spring의 대부분의 DB 기술에 동일하게 사용
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://localhost:3306/ordersystem
+    username: rootxxxxx
+    password: 1234yyyy
+  jpa:
+    database: mysql
+    # innoDB를 쓰겠다 라는 설정
+    database-platform: org.hibernate.dialect.MariaDBDialect
+    # ddl 문 자동생성 여부 true. 테이블은 자동생성(반영)해주나, 스키마는 반드시 사전에 생성 필요
+    generate-ddl: true
+    # jpa(인터페이스)의 실질적인 구현체는 hibernate 이다.
+    hibernate:
+      # create : 매번 table을 drop후 재 생성
+      # update : entity 변경사항만 alter를 적용하고 기존 데이터 유지
+      # validate : 실제 DB와의 차이점을 check만 하고 ddl 문 실행 x, 콘솔로만 변경사항 출력.
+      ddl-auto: create
+    # 콘솔창에 ddl, dml 등의 쿼리를 출력하여 보여주는 옵션
+    show_sql: true
+  servlet:
+    multipart:
+      # spring의 디폴트 사이즈 10MB
+      max-file-size: 1000MB
+      max-request-size: 1000MB
+
+# aws s3 접근하기 위한 계정 세팅
+cloud:
+  aws:
+    credentials:
+      access-key: xxxx
+      secret-key: yyyy
+    region:
+      static: ap-northeast-2
+    s3:
+      bucket: eunduk-board-bucket
+
+jwt:
+  expirationAt: 1000 # 1000분
+  # 인코딩된 문자 32자 이상 필요. (특수문자 X)
+  # beyondaccesstokensecretkeybeyondaccesstokensecretkeybeyondaccesstokensecretkey
+#  secretKeyAt: YmV5b25kYWNjZXNzdG9rZW5zZWNyZXRrZXliZXlvbmRhY2Nlc3N0b2tlbnNlY3JldGtleWJleW9uZGFjY2Vzc3Rva2Vuc2VjcmV0a2V5
+  secretKeyAt: xxxx
+  expirationRt: 10000 # 10000분
+  # 원래 아래 시크릿키 달라야 됨
+  secretKeyRt: yyyy
