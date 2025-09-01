@@ -1,0 +1,57 @@
+name: deploy to ec2 with jar
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout branch
+        uses: actions/checkout@v2
+
+      - name: setup java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: build jar
+        working-directory: .
+        run: |
+          chmod 777 ./gradlew
+          ./gradlew bootJar
+
+      - name: copy jar to ec2 inst1
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{secrets.EC2_HOST1}}
+          username: ubuntu
+          #          pemkey를 통해 해당 인스턴스에 접근
+          key: ${{secrets.EC2_PEMKEY}}
+          source: "./build/libs/*.jar"
+          target: "/home/ubuntu"
+
+      - name: install java and run jar on ec2 inst1
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{secrets.EC2_HOST1}}
+          username: ubuntu
+          #          pemkey를 통해 해당 인스턴스에 접근
+          key: ${{secrets.EC2_PEMKEY}}
+          script: |
+            if ! type java > /dev/null; then
+              sudo apt-get update && sudo apt-get install openjdk-17-jdk -y
+            else
+              echo "java is already installed"
+            fi
+            sudo killall java
+            nohup java -jar /home/ubuntu/build/libs/*.jar \
+            --spring.redis.host=${{secrets.REDIS_HOST}} \
+            --jwt.secretKeyAt=${{secrets.AT_SECRET_KEY}} \
+            --jwt.secretKeyRt=${{secrets.RT_SECRET_KEY}} \
+            --spring.datasource.url=jdbc:mariadb://${{secrets.DB_HOST}}:3306/ordersystem \
+            --spring.datasource.username=admin \
+            --spring.datasource.password=${{secrets.DB_PW}} > /home/ubuntu/app.log 2>&1 &
