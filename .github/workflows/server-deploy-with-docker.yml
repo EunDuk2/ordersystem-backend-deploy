@@ -1,0 +1,47 @@
+name: Deploy to Ec2 With Docker
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Build Docker Image
+      working-directory: .
+      run: docker build -t eunduk/ordersystem:latest .
+    
+    - name: DockerHub Login
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Push Docker Image to DockerHub
+      run: docker push eunduk/ordersystem:latest
+
+    - name: instance1 ec2 ssh login and docker run
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST1 }}
+        username: ubuntu
+        key: ${{ secrets.EC2_PEMKEY }}
+        script: |
+          if ! type docker > /dev/null ; then
+            export DEBIAN_FRONTEND=noninteractive
+            curl -fsSL https://get.docker.com | bash
+          fi
+          sudo docker login --username ${{ secrets.DOCKER_USERNAME }} --password ${{ secrets.DOCKER_PASSWORD }}
+
+          sudo docker pull eunduk/ordersystem:latest
+          sudo docker rm -f ordersystem || true
+
+          sudo docker run -d --name ordersystem  -p 8080:8080 \
+          -e SPRING_REDIS_HOST=${{ secrets.REDIS_HOST }} \
+          -e JWT_SECRETKEYAT=${{ secrets.AT_SECRET_KEY }} \
+          -e JWT_SECRETKEYRT=${{ secrets.RT_SECRET_KEY }} \
+          -e SPRING_DATASOURCE_URL=jdbc:mariadb://${{ secrets.DB_HOST }}:3306/ordersystem \
+          -e SPRING_DATASOURCE_USERNAME=admin \
+          -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PW }} eunduk/ordersystem:latest
