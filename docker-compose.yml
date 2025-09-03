@@ -19,6 +19,7 @@ services:
       - "8080:8080"
     depends_on:
       - mydb
+      - myredis
     restart: on-failure:1
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mariadb://mydb:3306/ordersystem

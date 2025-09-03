@@ -13,7 +13,7 @@ spring:
     activate:
       on-profile: prod
   redis:
-    host: xxxx
+    host: localhost
     port: 6379
   # 아래는 jdbc의 기본 db 관련 설정인데, jdbc 뿐만 아니라 mybatis / jpa 등 spring의 대부분의 DB 기술에 동일하게 사용
   datasource:
