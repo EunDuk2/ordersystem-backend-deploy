@@ -61,3 +61,4 @@ jwt:
   expirationRt: 10000 # 10000분
   # 원래 아래 시크릿키 달라야 됨
   secretKeyRt: yyyy
+  

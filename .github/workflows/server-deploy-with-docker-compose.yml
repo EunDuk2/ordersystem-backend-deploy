@@ -2,7 +2,7 @@ name: Deploy to Ec2 With Docker
 on:
   push:
     branches:
-      - dev
+      - main
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -22,6 +22,9 @@ jobs:
     - name: Push Docker Image to DockerHub
       run: docker push eunduk/ordersystem:latest
 
+
+    # 절차
+    # actions 실행 전에 docker-compose파일 scp 전송 후 실행 -> 새로운 이미지 생성 시, Spring컨테이너만 재실행
     - name: instance1 ec2 ssh login and docker run
       uses: appleboy/ssh-action@master
       with:
@@ -33,15 +36,15 @@ jobs:
             export DEBIAN_FRONTEND=noninteractive
             curl -fsSL https://get.docker.com | bash
           fi
+
+          if ! type docker-compose > /dev/null 2>&1; then
+            sudo curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+
           sudo docker login --username ${{ secrets.DOCKER_USERNAME }} --password ${{ secrets.DOCKER_PASSWORD }}
 
           sudo docker pull eunduk/ordersystem:latest
-          sudo docker rm -f ordersystem || true
 
-          sudo docker run -d --name ordersystem  -p 8080:8080 \
-          -e SPRING_REDIS_HOST=${{ secrets.REDIS_HOST }} \
-          -e JWT_SECRETKEYAT=${{ secrets.AT_SECRET_KEY }} \
-          -e JWT_SECRETKEYRT=${{ secrets.RT_SECRET_KEY }} \
-          -e SPRING_DATASOURCE_URL=jdbc:mariadb://${{ secrets.DB_HOST }}:3306/ordersystem \
-          -e SPRING_DATASOURCE_USERNAME=admin \
-          -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PW }} eunduk/ordersystem:latest
+          sudo docker-compose up -d --force-recreate myordersystem
+          

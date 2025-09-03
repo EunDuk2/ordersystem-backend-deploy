@@ -1,0 +1,29 @@
+# docker-compose 스크립트 문법에 대한 버전
+version: '3.8'
+services:
+  mydb:
+    image: mariadb
+    environment:
+      - MARIADB_ROOT_PASSWORD=1234
+      - MARIADB_DATABASE=ordersystem
+    # 도커 컴포즈 네트워크 내에서는 외부포트 제거 가능
+    ports:
+      - "3306:3306"
+  myredis:
+    image: redis
+    # ports:
+    #   - "6388:6379"
+  myordersystem:
+    image: eunduk/ordersystem:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mydb
+    restart: on-failure:1
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mydb:3306/ordersystem
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=1234
+      - SPRING_REDIS_HOST=myredis
+      - JWT_SECRETKEYAT=YmV5b25kYWNjZXNzdG9rZW5zZWNyZXRrZXliZXlvbmRhY2Nlc3N0b2tlbnNlY3JldGtleWJleW9uZGFjY2Vzc3Rva2Vuc2VjcmV0a2V5
+      - JWT_SECRETKEYRT=YmV5b25kYWNjZXNzdG9rZW5zZWNyZXRrZXliZXlvbmRhY2Nlc3N0b2tlbnNlY3JldGtleWJleW9uZGFjY2Vzc3Rva2Vuc2VjcmV0a2V5
